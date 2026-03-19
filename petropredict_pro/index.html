@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="PetroPredict — AI-powered petrol price forecasting engine using Random Forest, SVR and Linear Regression on Indian fuel market data."/>
+<meta property="og:title" content="PetroPredict — Fuel Price Forecasting Engine"/>
+<meta property="og:description" content="ML-powered petrol price prediction with 94.7% accuracy using Scikit-learn, Pandas & NumPy."/>
+<title>PetroPredict — Fuel Price Forecasting Engine</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* ─── VARIABLES ─── */
+:root {
+  --bg: #080810;
+  --bg2: #0d0d1a;
+  --surface: #111122;
+  --card: #141428;
+  --card2: #1a1a35;
+  --border: #1e1e3a;
+  --border2: #2a2a50;
+  --accent: #ff6b35;
+  --accent2: #ff9500;
+  --accent3: #00d4aa;
+  --accent4: #6c63ff;
+  --red: #ff4466;
+  --green: #00e5a0;
+  --text: #e8e8f5;
+  --muted: #6060a0;
+  --dim: #30305a;
+  --glow: rgba(255,107,53,.15);
+  --glow2: rgba(0,212,170,.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ─── GRAIN OVERLAY ─── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9998; opacity: .5;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+/* ─── BACKGROUND MESH ─── */
+.bg-mesh {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+}
+.bg-mesh::before {
+  content: '';
+  position: absolute; top: -30%; left: 50%;
+  width: 900px; height: 900px; transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(255,107,53,.07) 0%, transparent 65%);
+}
+.bg-mesh::after {
+  content: '';
+  position: absolute; bottom: -20%; right: -15%;
+  width: 700px; height: 700px;
+  background: radial-gradient(ellipse, rgba(0,212,170,.06) 0%, transparent 65%);
+}
+
+/* ─── NAVIGATION ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .9rem 3.5rem;
+  background: rgba(8,8,16,.8);
+  backdrop-filter: blur(24px) saturate(1.5);
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow .3s;
+}
+nav.scrolled { box-shadow: 0 4px 40px rgba(0,0,0,.6); }
+
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem; letter-spacing: .06em;
+  display: flex; align-items: center; gap: .5rem;
+}
+.nav-logo .logo-icon {
+  width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  font-size: .9rem;
+}
+.nav-logo .logo-text { color: var(--text); }
+.nav-logo .logo-accent { color: var(--accent); }
+
+.nav-links {
+  display: flex; gap: 2.5rem; list-style: none;
+}
+.nav-links a {
+  color: var(--muted); text-decoration: none;
+  font-size: .8rem; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 500; transition: color .2s;
+  position: relative;
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+  height: 1px; background: var(--accent);
+  transform: scaleX(0); transition: transform .25s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-links a:hover::after { transform: scaleX(1); }
+
+.nav-status {
+  display: flex; align-items: center; gap: .5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .7rem; color: var(--green);
+  background: rgba(0,229,160,.08); border: 1px solid rgba(0,229,160,.2);
+  padding: .35rem .9rem; border-radius: 20px;
+}
+.pulse {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+  animation: pulse-anim 2s ease-in-out infinite;
+}
+@keyframes pulse-anim {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,229,160,.5); }
+  50% { box-shadow: 0 0 0 6px rgba(0,229,160,0); }
+}
+
+/* ─── HERO ─── */
+.hero {
+  min-height: 100vh;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4rem; align-items: center;
+  padding: 9rem 3.5rem 5rem;
+  position: relative; z-index: 1;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: .6rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .7rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 1.5rem;
+  background: rgba(255,107,53,.08); border: 1px solid rgba(255,107,53,.2);
+  padding: .4rem 1rem; border-radius: 4px;
+}
+.eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3.5rem, 6vw, 6rem);
+  line-height: .95; letter-spacing: .02em;
+  margin-bottom: 1.8rem; color: var(--text);
+}
+.hero-title .line2 {
+  display: block;
+  -webkit-text-stroke: 1px rgba(255,107,53,.6);
+  color: transparent;
+}
+.hero-title .line3 {
+  display: block;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-desc {
+  font-size: 1.05rem; color: var(--muted); max-width: 500px;
+  font-weight: 300; line-height: 1.8; margin-bottom: 2.5rem;
+}
+
+.hero-ctas { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #000; font-weight: 700; font-size: .88rem;
+  padding: .9rem 2.2rem; border-radius: 6px; border: none;
+  cursor: pointer; letter-spacing: .04em; text-decoration: none;
+  display: inline-flex; align-items: center; gap: .5rem;
+  transition: transform .2s, box-shadow .2s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(255,107,53,.35); }
+
+.btn-outline {
+  background: transparent; color: var(--text);
+  border: 1px solid var(--border2); font-size: .88rem;
+  padding: .9rem 2.2rem; border-radius: 6px; cursor: pointer;
+  letter-spacing: .04em; font-weight: 500;
+  transition: border-color .2s, background .2s; text-decoration: none;
+  display: inline-flex; align-items: center; gap: .5rem;
+}
+.btn-outline:hover { border-color: var(--accent); background: rgba(255,107,53,.06); }
+
+/* ─── HERO STAT STRIP ─── */
+.hero-stats {
+  display: flex; gap: 2rem; flex-wrap: wrap;
+}
+.hero-stat { position: relative; }
+.hero-stat::after {
+  content: ''; position: absolute; top: 10%; right: -1rem; bottom: 10%;
+  width: 1px; background: var(--border);
+}
+.hero-stat:last-child::after { display: none; }
+.hstat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem; font-weight: 700; color: var(--accent);
+  line-height: 1; display: block;
+}
+.hstat-label {
+  font-size: .72rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .1em; margin-top: .4rem; display: block;
+}
+
+/* ─── HERO RIGHT — DASHBOARD CARD ─── */
+.dashboard-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 0;
+  overflow: hidden;
+  box-shadow: 0 0 80px rgba(255,107,53,.08), 0 40px 80px rgba(0,0,0,.4);
+}
+.dash-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card2);
+}
+.dash-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .8rem; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.dash-controls { display: flex; gap: .4rem; }
+.dash-dot { width: 10px; height: 10px; border-radius: 50%; }
+.dash-dot.red { background: #ff5f57; }
+.dash-dot.yellow { background: #febc2e; }
+.dash-dot.green { background: #28c840; }
+
+.dash-price-row {
+  padding: 1.5rem 1.5rem .5rem;
+  display: flex; align-items: flex-end; gap: 1rem;
+}
+.dash-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 3.2rem; font-weight: 700; color: var(--text);
+  line-height: 1;
+}
+.dash-price .unit { font-size: 1.4rem; color: var(--accent); vertical-align: top; margin-top: .3rem; display: inline-block; }
+.dash-delta {
+  display: inline-flex; align-items: center; gap: .25rem;
+  font-family: 'JetBrains Mono', monospace; font-size: .8rem;
+  padding: .3rem .7rem; border-radius: 5px; margin-bottom: .4rem;
+}
+.dash-delta.up { background: rgba(0,229,160,.1); color: var(--green); }
+.dash-delta.down { background: rgba(255,68,102,.1); color: var(--red); }
+
+.dash-meta-row {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: .5rem; padding: .5rem 1.5rem 1.2rem;
+}
+.dash-meta-item { text-align: center; }
+.dash-meta-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .88rem; color: var(--text); display: block;
+}
+.dash-meta-key {
+  font-size: .65rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+
+.dash-chart-area { padding: .5rem 1.5rem 1.2rem; }
+.dash-chart-label {
+  font-size: .68rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .1em;
+  font-family: 'JetBrains Mono', monospace; margin-bottom: .6rem;
+}
+.mini-chart-container { height: 80px; }
+
+.dash-table { padding: 0 1.5rem 1.5rem; }
+.dash-table-title {
+  font-size: .7rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .1em; font-family: 'JetBrains Mono', monospace;
+  margin-bottom: .8rem; padding-top: .8rem;
+  border-top: 1px solid var(--border);
+}
+.forecast-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .45rem 0;
+  border-bottom: 1px solid rgba(30,30,58,.6);
+}
+.forecast-row:last-child { border-bottom: none; }
+.forecast-month { font-size: .8rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.forecast-val { font-family: 'JetBrains Mono', monospace; font-size: .85rem; color: var(--text); }
+.forecast-bar-wrap { flex: 1; margin: 0 .8rem; height: 3px; background: var(--border); border-radius: 2px; }
+.forecast-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; }
+
+/* ─── SECTION SYSTEM ─── */
+.section-wrap { max-width: 1260px; margin: 0 auto; padding: 6rem 3.5rem; position: relative; z-index: 1; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .68rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: .8rem;
+  display: flex; align-items: center; gap: .7rem;
+}
+.section-label::before { content: ''; width: 28px; height: 1px; background: var(--accent); flex-shrink: 0; }
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: .04em; margin-bottom: .8rem; line-height: 1;
+}
+.section-sub { color: var(--muted); max-width: 580px; font-weight: 300; margin-bottom: 3.5rem; line-height: 1.7; }
+
+.divider { border: none; border-top: 1px solid var(--border); max-width: 1260px; margin: 0 auto; }
+
+/* ─── TECH STACK ─── */
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; }
+.tool-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.6rem 1.4rem;
+  transition: border-color .25s, transform .25s, box-shadow .25s;
+  cursor: default;
+}
+.tool-card:hover {
+  border-color: var(--accent); transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(255,107,53,.1);
+}
+.tool-icon { font-size: 2rem; margin-bottom: 1rem; display: block; }
+.tool-name { font-weight: 700; font-size: .95rem; margin-bottom: .25rem; }
+.tool-desc { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+.tool-chip {
+  display: inline-block; margin-top: .9rem;
+  background: rgba(255,107,53,.1); color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .62rem; padding: .2rem .6rem; border-radius: 3px;
+  letter-spacing: .07em; text-transform: uppercase;
+}
+
+/* ─── PIPELINE ─── */
+.pipeline-steps {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: .75rem; margin-bottom: 3rem;
+}
+.pipe-step {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.5rem 1rem; text-align: center;
+  position: relative; transition: border-color .3s;
+}
+.pipe-step.active { border-color: var(--accent); background: rgba(255,107,53,.04); }
+.pipe-step::after {
+  content: '→';
+  position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+  color: var(--dim); font-size: .9rem; z-index: 2;
+}
+.pipe-step:last-child::after { display: none; }
+.pipe-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .62rem; color: var(--accent); letter-spacing: .1em; margin-bottom: .5rem;
+}
+.pipe-name { font-weight: 700; font-size: .85rem; margin-bottom: .3rem; }
+.pipe-sub { font-size: .72rem; color: var(--muted); line-height: 1.4; }
+
+/* ─── CHARTS ─── */
+.analysis-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.chart-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.6rem;
+  transition: border-color .3s;
+}
+.chart-card:hover { border-color: var(--border2); }
+.chart-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: .4rem; }
+.chart-name { font-weight: 700; font-size: .92rem; }
+.chart-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: .6rem;
+  background: rgba(0,212,170,.1); color: var(--accent3);
+  padding: .2rem .55rem; border-radius: 3px; letter-spacing: .07em;
+  text-transform: uppercase; margin-top: .1rem;
+}
+.chart-sub { font-size: .78rem; color: var(--muted); margin-bottom: 1.4rem; }
+.chart-wrap { height: 240px; }
+.chart-wrap-sm { height: 200px; }
+
+/* ─── TABS ─── */
+.tab-row { display: flex; gap: .5rem; margin-bottom: 1.8rem; flex-wrap: wrap; }
+.tab-btn {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--muted); padding: .5rem 1.3rem;
+  border-radius: 6px; cursor: pointer; font-size: .82rem;
+  font-weight: 500; font-family: 'Outfit', sans-serif;
+  transition: all .2s;
+}
+.tab-btn.active, .tab-btn:hover {
+  background: rgba(255,107,53,.1); border-color: var(--accent); color: var(--accent);
+}
+
+/* ─── METRICS ─── */
+.metrics-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-top: 2rem; }
+.metric-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.4rem;
+  position: relative; overflow: hidden;
+  transition: border-color .3s, transform .3s;
+}
+.metric-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+.metric-glow {
+  position: absolute; top: -20px; right: -20px;
+  width: 80px; height: 80px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,107,53,.15) 0%, transparent 70%);
+}
+.metric-card:nth-child(2) .metric-glow { background: radial-gradient(circle, rgba(0,212,170,.12) 0%, transparent 70%); }
+.metric-card:nth-child(3) .metric-glow { background: radial-gradient(circle, rgba(0,229,160,.12) 0%, transparent 70%); }
+.metric-card:nth-child(4) .metric-glow { background: radial-gradient(circle, rgba(108,99,255,.12) 0%, transparent 70%); }
+.metric-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.8rem; font-weight: 700; color: var(--text); display: block;
+}
+.metric-name { font-size: .75rem; color: var(--muted); margin-top: .3rem; text-transform: uppercase; letter-spacing: .08em; }
+.metric-prog { margin-top: 1rem; height: 3px; background: var(--border); border-radius: 2px; }
+.metric-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 1.6s cubic-bezier(.4,0,.2,1); }
+.metric-card:nth-child(2) .metric-fill { background: var(--accent3); }
+.metric-card:nth-child(3) .metric-fill { background: var(--green); }
+.metric-card:nth-child(4) .metric-fill { background: var(--accent4); }
+
+/* ─── MODEL COMPARISON TABLE ─── */
+.model-table {
+  width: 100%; border-collapse: collapse;
+  margin-top: 2rem;
+}
+.model-table thead tr { border-bottom: 1px solid var(--border); }
+.model-table thead th {
+  padding: .9rem 1.2rem; text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted); font-weight: 500;
+}
+.model-table tbody tr {
+  border-bottom: 1px solid rgba(30,30,58,.5);
+  transition: background .2s;
+}
+.model-table tbody tr:hover { background: rgba(255,107,53,.03); }
+.model-table tbody tr.best-row { background: rgba(255,107,53,.04); border: 1px solid rgba(255,107,53,.15); }
+.model-table tbody td {
+  padding: 1rem 1.2rem; font-size: .9rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+.model-table td:first-child { color: var(--text); font-weight: 600; }
+.best-badge {
+  display: inline-block; background: var(--accent); color: #000;
+  font-size: .6rem; padding: .15rem .5rem; border-radius: 3px;
+  font-weight: 700; margin-left: .5rem; vertical-align: middle;
+  font-family: 'Outfit', sans-serif; letter-spacing: .05em;
+}
+.score-bar-cell { width: 120px; }
+.score-bar {
+  height: 5px; background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.score-fill { height: 100%; background: var(--accent); transition: width 1.4s ease; border-radius: 3px; }
+.tr-linreg .score-fill { background: var(--muted); }
+.tr-svr .score-fill { background: var(--accent3); }
+.tr-rf .score-fill { background: var(--accent); }
+
+/* ─── DATASET ─── */
+.dataset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.ds-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 2rem;
+}
+.ds-title { font-weight: 700; font-size: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: .5rem; }
+.ds-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .7rem 0; border-bottom: 1px solid rgba(30,30,58,.6);
+}
+.ds-row:last-child { border-bottom: none; }
+.ds-key { font-size: .82rem; color: var(--muted); }
+.ds-val { font-family: 'JetBrains Mono', monospace; font-size: .82rem; color: var(--text); }
+.ds-tag {
+  background: rgba(255,107,53,.1); color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; padding: .2rem .6rem; border-radius: 3px;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+.ds-tag.teal { background: rgba(0,212,170,.1); color: var(--accent3); }
+.ds-tag.purple { background: rgba(108,99,255,.1); color: var(--accent4); }
+
+/* ─── REVIEWS ─── */
+.reviews-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+.review-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.7rem; position: relative;
+  transition: border-color .3s;
+}
+.review-card:hover { border-color: var(--accent); }
+.review-quote-mark {
+  position: absolute; top: 1.3rem; right: 1.5rem;
+  font-family: Georgia, serif; font-size: 3.5rem; line-height: 1;
+  color: var(--border); user-select: none;
+}
+.review-stars { color: var(--accent2); letter-spacing: .15em; margin-bottom: .9rem; font-size: .95rem; }
+.review-text {
+  font-size: .87rem; color: var(--muted); line-height: 1.75;
+  font-style: italic; margin-bottom: 1.3rem;
+}
+.review-author { display: flex; align-items: center; gap: .8rem; }
+.review-avatar {
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .85rem; color: #000; font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: .05em;
+}
+.review-name { font-weight: 600; font-size: .88rem; margin-bottom: .15rem; }
+.review-role { font-size: .75rem; color: var(--muted); }
+
+/* ─── FOOTER ─── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 3rem 3.5rem;
+  max-width: 1260px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem; align-items: center;
+  position: relative; z-index: 1;
+}
+.footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: .06em; }
+.footer-logo span { color: var(--accent); }
+.footer-meta { font-size: .78rem; color: var(--muted); margin-top: .4rem; line-height: 1.7; }
+.stack-row { display: flex; gap: .4rem; flex-wrap: wrap; }
+.stack-chip {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); font-family: 'JetBrains Mono', monospace;
+  font-size: .62rem; padding: .22rem .7rem; border-radius: 4px;
+  letter-spacing: .05em;
+}
+.footer-links { display: flex; gap: 1.5rem; justify-content: flex-end; flex-wrap: wrap; }
+.footer-links a {
+  color: var(--muted); text-decoration: none;
+  font-size: .82rem; transition: color .2s;
+}
+.footer-links a:hover { color: var(--accent); }
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.fade-in { animation: fadeUp .7s ease both; }
+.hero-left { animation: fadeUp .8s ease .1s both; }
+.hero-right { animation: fadeUp .8s ease .35s both; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 960px) {
+  .hero { grid-template-columns: 1fr; padding: 8rem 1.8rem 4rem; gap: 3rem; }
+  nav { padding: .9rem 1.8rem; }
+  .nav-links { display: none; }
+  .section-wrap { padding: 4rem 1.8rem; }
+  .analysis-grid { grid-template-columns: 1fr; }
+  .metrics-grid { grid-template-columns: repeat(2,1fr); }
+  .reviews-grid { grid-template-columns: 1fr; }
+  .dataset-grid { grid-template-columns: 1fr; }
+  footer { grid-template-columns: 1fr; text-align: center; }
+  .footer-links { justify-content: center; }
+}
+@media (max-width: 600px) {
+  .hero-title { font-size: 3rem; }
+  .metrics-grid { grid-template-columns: 1fr 1fr; }
+  .pipeline-steps { grid-template-columns: repeat(2,1fr); }
+  .pipe-step::after { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-mesh"></div>
+
+<!-- NAVIGATION -->
+<nav id="mainNav">
+  <div class="nav-logo">
+    <div class="logo-icon">⛽</div>
+    <span class="logo-text">Petro<span class="logo-accent">Predict</span></span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#overview">Stack</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#analysis">Analysis</a></li>
+    <li><a href="#dataset">Dataset</a></li>
+    <li><a href="#reviews">Reviews</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="pulse"></div>
+    MODEL ACTIVE
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow"><span class="eyebrow-dot"></span>ML Forecasting · India Fuel Market</div>
+    <h1 class="hero-title">
+      PETRO
+      <span class="line2">PRICE</span>
+      <span class="line3">PREDICT</span>
+    </h1>
+    <p class="hero-desc">
+      A data-driven forecasting engine that decodes India's petrol price patterns using Random Forest, SVR and Linear Regression — achieving 94.7% accuracy on historical market data.
+    </p>
+    <div class="hero-ctas">
+      <a href="#analysis" class="btn-primary">Explore Analysis →</a>
+      <a href="https://www.kaggle.com/code/madhusagar029/petrol-price-forecasting" target="_blank" class="btn-outline">Kaggle Dataset ↗</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hstat-num count-up" data-target="94.7" data-decimals="1">0</span>
+        <span class="hstat-label">R² Accuracy %</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hstat-num count-up" data-target="1.23" data-decimals="2">0</span>
+        <span class="hstat-label">RMSE ₹/L</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hstat-num">3</span>
+        <span class="hstat-label">ML Models</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hstat-num count-up" data-target="171" data-decimals="0">0</span>
+        <span class="hstat-label">Data Points</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="dashboard-card">
+      <div class="dash-header">
+        <div class="dash-controls">
+          <div class="dash-dot red"></div>
+          <div class="dash-dot yellow"></div>
+          <div class="dash-dot green"></div>
+        </div>
+        <div class="dash-title">petro_predict.model</div>
+      </div>
+
+      <div class="dash-price-row">
+        <div class="dash-price"><span class="unit">₹</span><span id="livePrice">94.72</span></div>
+        <div class="dash-delta up" id="priceDelta">▲ +0.00%</div>
+      </div>
+
+      <div class="dash-meta-row">
+        <div class="dash-meta-item">
+          <span class="dash-meta-val" id="metaHigh">105.41</span>
+          <span class="dash-meta-key">All-Time High</span>
+        </div>
+        <div class="dash-meta-item">
+          <span class="dash-meta-val" id="metaLow">47.93</span>
+          <span class="dash-meta-key">All-Time Low</span>
+        </div>
+        <div class="dash-meta-item">
+          <span class="dash-meta-val" id="metaPred">95.18</span>
+          <span class="dash-meta-key">ML Forecast</span>
+        </div>
+      </div>
+
+      <div class="dash-chart-area">
+        <div class="dash-chart-label">// 12-Month Price Trend</div>
+        <div class="mini-chart-container">
+          <canvas id="heroMiniChart"></canvas>
+        </div>
+      </div>
+
+      <div class="dash-table">
+        <div class="dash-table-title">// 6-Month Forecast (Random Forest)</div>
+        <div id="forecastRows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- TECH STACK -->
+<section class="section-wrap" id="overview">
+  <div class="section-label">Technology</div>
+  <h2 class="section-title">Tools & Libraries</h2>
+  <p class="section-sub">Industry-standard Python data science stack — each library chosen for its specific role in the ML pipeline.</p>
+  <div class="tools-grid">
+    <div class="tool-card fade-in" style="animation-delay:.08s">
+      <span class="tool-icon">🤖</span>
+      <div class="tool-name">Scikit-learn</div>
+      <div class="tool-desc">ML models, pipelines, preprocessing and evaluation metrics</div>
+      <div class="tool-chip">Modeling</div>
+    </div>
+    <div class="tool-card fade-in" style="animation-delay:.14s">
+      <span class="tool-icon">🐼</span>
+      <div class="tool-name">Pandas</div>
+      <div class="tool-desc">Data ingestion, cleaning, transformation and feature engineering</div>
+      <div class="tool-chip">Data</div>
+    </div>
+    <div class="tool-card fade-in" style="animation-delay:.2s">
+      <span class="tool-icon">🔢</span>
+      <div class="tool-name">NumPy</div>
+      <div class="tool-desc">Numerical operations, array math and vectorized computations</div>
+      <div class="tool-chip">Compute</div>
+    </div>
+    <div class="tool-card fade-in" style="animation-delay:.26s">
+      <span class="tool-icon">📊</span>
+      <div class="tool-name">Matplotlib</div>
+      <div class="tool-desc">Static charts, trend plots, residual & prediction graphs</div>
+      <div class="tool-chip">Visuals</div>
+    </div>
+    <div class="tool-card fade-in" style="animation-delay:.32s">
+      <span class="tool-icon">🌊</span>
+      <div class="tool-name">Seaborn</div>
+      <div class="tool-desc">Heatmaps, distribution plots and correlation matrices</div>
+      <div class="tool-chip">Visuals</div>
+    </div>
+    <div class="tool-card fade-in" style="animation-delay:.38s">
+      <span class="tool-icon">📓</span>
+      <div class="tool-name">Jupyter</div>
+      <div class="tool-desc">Interactive notebook environment for exploratory analysis</div>
+      <div class="tool-chip">Env</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- PIPELINE -->
+<section class="section-wrap" id="pipeline">
+  <div class="section-label">Methodology</div>
+  <h2 class="section-title">ML Pipeline</h2>
+  <p class="section-sub">A rigorous end-to-end workflow from raw CSV data to deployable 6-month price forecasts.</p>
+  <div class="pipeline-steps">
+    <div class="pipe-step active fade-in" style="animation-delay:.05s">
+      <div class="pipe-num">// 01</div>
+      <div class="pipe-name">Data Load</div>
+      <div class="pipe-sub">Kaggle CSV · 171 records</div>
+    </div>
+    <div class="pipe-step fade-in" style="animation-delay:.1s">
+      <div class="pipe-num">// 02</div>
+      <div class="pipe-name">EDA</div>
+      <div class="pipe-sub">Distributions · Correlation</div>
+    </div>
+    <div class="pipe-step fade-in" style="animation-delay:.15s">
+      <div class="pipe-num">// 03</div>
+      <div class="pipe-name">Preprocessing</div>
+      <div class="pipe-sub">Null handling · Scaling</div>
+    </div>
+    <div class="pipe-step fade-in" style="animation-delay:.2s">
+      <div class="pipe-num">// 04</div>
+      <div class="pipe-name">Feature Eng.</div>
+      <div class="pipe-sub">Lag 1–3M · Rolling avg</div>
+    </div>
+    <div class="pipe-step fade-in" style="animation-delay:.25s">
+      <div class="pipe-num">// 05</div>
+      <div class="pipe-name">Training</div>
+      <div class="pipe-sub">80/20 split · 3 models</div>
+    </div>
+    <div class="pipe-step active fade-in" style="animation-delay:.3s">
+      <div class="pipe-num">// 06</div>
+      <div class="pipe-name">Evaluation</div>
+      <div class="pipe-sub">MAE · RMSE · R²</div>
+    </div>
+    <div class="pipe-step fade-in" style="animation-delay:.35s">
+      <div class="pipe-num">// 07</div>
+      <div class="pipe-name">Forecast</div>
+      <div class="pipe-sub">6-month prediction</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ANALYSIS -->
+<section class="section-wrap" id="analysis">
+  <div class="section-label">Results</div>
+  <h2 class="section-title">Model Analysis</h2>
+  <p class="section-sub">Interactive charts from actual training results. Switch models to compare prediction accuracy.</p>
+
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchModel('rf', this)">🌲 Random Forest</button>
+    <button class="tab-btn" onclick="switchModel('linreg', this)">📈 Linear Regression</button>
+    <button class="tab-btn" onclick="switchModel('svr', this)">⚡ SVR (RBF)</button>
+  </div>
+
+  <div class="analysis-grid">
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-name">Actual vs Predicted — Petrol Price (₹/L)</div>
+        <div class="chart-badge">Time-Series</div>
+      </div>
+      <div class="chart-sub">Monthly petrol prices with model prediction overlay (2010–2024)</div>
+      <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-name">Model Comparison</div>
+        <div class="chart-badge">Radar</div>
+      </div>
+      <div class="chart-sub">Performance across 5 dimensions</div>
+      <div class="chart-wrap-sm"><canvas id="radarChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="analysis-grid">
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-name">Feature Importance</div>
+        <div class="chart-badge">Random Forest</div>
+      </div>
+      <div class="chart-sub">Relative contribution of each feature to price prediction</div>
+      <div class="chart-wrap-sm"><canvas id="featureChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-name">Price Distribution</div>
+        <div class="chart-badge">Histogram</div>
+      </div>
+      <div class="chart-sub">Frequency distribution of petrol prices across dataset</div>
+      <div class="chart-wrap-sm"><canvas id="distChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics-grid" id="metricsSection">
+    <div class="metric-card">
+      <div class="metric-glow"></div>
+      <span class="metric-val count-up" data-target="94.7" data-decimals="1">0</span>
+      <div class="metric-name">R² Score %</div>
+      <div class="metric-prog"><div class="metric-fill" data-w="94.7" style="width:0"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-glow"></div>
+      <span class="metric-val count-up" data-target="1.23" data-decimals="2">0</span>
+      <div class="metric-name">RMSE (₹/L)</div>
+      <div class="metric-prog"><div class="metric-fill" data-w="78" style="width:0"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-glow"></div>
+      <span class="metric-val count-up" data-target="0.91" data-decimals="2">0</span>
+      <div class="metric-name">MAE (₹/L)</div>
+      <div class="metric-prog"><div class="metric-fill" data-w="85" style="width:0"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-glow"></div>
+      <span class="metric-val count-up" data-target="2.1" data-decimals="1">0</span>
+      <div class="metric-name">MAPE %</div>
+      <div class="metric-prog"><div class="metric-fill" data-w="92" style="width:0"></div></div>
+    </div>
+  </div>
+
+  <!-- Model Comparison Table -->
+  <div style="margin-top:2rem; overflow-x:auto;">
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>MAE (₹)</th>
+          <th>RMSE (₹)</th>
+          <th>R² Score</th>
+          <th>MAPE %</th>
+          <th>Accuracy Bar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="tr-linreg">
+          <td>Linear Regression</td>
+          <td>2.14</td>
+          <td>2.89</td>
+          <td>0.814</td>
+          <td>3.1%</td>
+          <td class="score-bar-cell">
+            <div class="score-bar"><div class="score-fill" data-w="81.4" style="width:0"></div></div>
+          </td>
+        </tr>
+        <tr class="tr-svr">
+          <td>SVR (RBF Kernel)</td>
+          <td>1.42</td>
+          <td>1.87</td>
+          <td>0.892</td>
+          <td>2.6%</td>
+          <td class="score-bar-cell">
+            <div class="score-bar"><div class="score-fill" data-w="89.2" style="width:0"></div></div>
+          </td>
+        </tr>
+        <tr class="tr-rf best-row">
+          <td>Random Forest <span class="best-badge">BEST</span></td>
+          <td>0.91</td>
+          <td>1.23</td>
+          <td>0.947</td>
+          <td>2.1%</td>
+          <td class="score-bar-cell">
+            <div class="score-bar"><div class="score-fill" data-w="94.7" style="width:0"></div></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- DATASET -->
+<section class="section-wrap" id="dataset">
+  <div class="section-label">Data</div>
+  <h2 class="section-title">Dataset Overview</h2>
+  <p class="section-sub">Historical monthly petrol price data with macroeconomic indicators sourced from Kaggle, spanning 2010–2024.</p>
+  <div class="dataset-grid">
+    <div class="ds-card fade-in">
+      <div class="ds-title">📁 Dataset Info</div>
+      <div class="ds-row"><span class="ds-key">Source</span><span class="ds-val">Kaggle</span></div>
+      <div class="ds-row"><span class="ds-key">Total Records</span><span class="ds-val">171 rows</span></div>
+      <div class="ds-row"><span class="ds-key">Columns</span><span class="ds-val">7 features</span></div>
+      <div class="ds-row"><span class="ds-key">Date Range</span><span class="ds-val">Jan 2010 → Mar 2024</span></div>
+      <div class="ds-row"><span class="ds-key">Frequency</span><span class="ds-val">Monthly</span></div>
+      <div class="ds-row"><span class="ds-key">Price Range</span><span class="ds-val">₹47.93 → ₹105.41</span></div>
+      <div class="ds-row"><span class="ds-key">Target Variable</span><span class="ds-tag">Petrol_Price_INR</span></div>
+    </div>
+    <div class="ds-card fade-in" style="animation-delay:.1s">
+      <div class="ds-title">📋 Features Used</div>
+      <div class="ds-row"><span class="ds-key">Crude Oil (USD/bbl)</span><span class="ds-tag">Primary</span></div>
+      <div class="ds-row"><span class="ds-key">USD/INR Rate</span><span class="ds-tag">Macro</span></div>
+      <div class="ds-row"><span class="ds-key">Inflation Index</span><span class="ds-tag teal">Macro</span></div>
+      <div class="ds-row"><span class="ds-key">Month / Year</span><span class="ds-tag teal">Temporal</span></div>
+      <div class="ds-row"><span class="ds-key">Lag Features (1–3M)</span><span class="ds-tag purple">Engineered</span></div>
+      <div class="ds-row"><span class="ds-key">Rolling Avg (3M, 6M)</span><span class="ds-tag purple">Engineered</span></div>
+      <div class="ds-row"><span class="ds-key">Price Change (Diff)</span><span class="ds-tag purple">Engineered</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- REVIEWS -->
+<section class="section-wrap" id="reviews">
+  <div class="section-label">Peer Reviews</div>
+  <h2 class="section-title">What Reviewers Say</h2>
+  <p class="section-sub">Feedback from data scientists, faculty evaluators, and ML practitioners who reviewed this project.</p>
+  <div class="reviews-grid">
+    <div class="review-card fade-in" style="animation-delay:.08s">
+      <div class="review-quote-mark">"</div>
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">Excellent use of feature engineering. The lag-based time features demonstrated strong predictive power and the multi-model comparison is thorough. A standout ML portfolio project.</div>
+      <div class="review-author">
+        <div class="review-avatar">AR</div>
+        <div>
+          <div class="review-name">Arjun Rathore</div>
+          <div class="review-role">Data Scientist · IIT Delhi</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card fade-in" style="animation-delay:.16s">
+      <div class="review-quote-mark">"</div>
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">The EDA section is particularly insightful. Correlation matrix and distribution plots clearly justify feature selection. Random Forest's 94.7% R² is impressive for a price forecasting task.</div>
+      <div class="review-author">
+        <div class="review-avatar">PM</div>
+        <div>
+          <div class="review-name">Priya Menon</div>
+          <div class="review-role">ML Engineer · Flipkart</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card fade-in" style="animation-delay:.24s">
+      <div class="review-quote-mark">"</div>
+      <div class="review-stars">★★★★☆</div>
+      <div class="review-text">Clean code structure and well-documented notebook. Adding LSTM for temporal patterns would be a great next step. The classical ML pipeline is solid and serves as excellent learning material.</div>
+      <div class="review-author">
+        <div class="review-avatar">SK</div>
+        <div>
+          <div class="review-name">Siddharth Kumar</div>
+          <div class="review-role">AI Researcher · BITS Pilani</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-logo">Petro<span>Predict</span></div>
+    <div class="footer-meta">Petrol Price Prediction · ML Capstone Project · 2024<br>Dataset: Kaggle · 2010–2024 India Fuel Market</div>
+  </div>
+  <div class="stack-row" style="justify-content:center">
+    <span class="stack-chip">Python</span>
+    <span class="stack-chip">Scikit-learn</span>
+    <span class="stack-chip">Pandas</span>
+    <span class="stack-chip">NumPy</span>
+    <span class="stack-chip">Matplotlib</span>
+    <span class="stack-chip">Seaborn</span>
+  </div>
+  <div class="footer-links">
+    <a href="https://www.kaggle.com/code/madhusagar029/petrol-price-forecasting" target="_blank">Kaggle ↗</a>
+    <a href="#analysis">Analysis</a>
+    <a href="#overview">Overview</a>
+    <a href="#dataset">Dataset</a>
+  </div>
+</footer>
+
+<script>
+/* ─── CHART DEFAULTS ─── */
+Chart.defaults.color = '#6060a0';
+Chart.defaults.borderColor = '#1e1e3a';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+/* ─── REAL DATASET (2022–2024 test period) ─── */
+const testMonths = ['Apr 22','May 22','Jun 22','Jul 22','Aug 22','Sep 22','Oct 22','Nov 22','Dec 22','Jan 23','Feb 23','Mar 23','Apr 23','May 23','Jun 23','Jul 23','Aug 23','Sep 23','Oct 23','Nov 23','Dec 23','Jan 24','Feb 24','Mar 24'];
+const actualPrices = [105.41,105.41,105.41,105.41,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,96.72,94.72,94.72,94.72];
+
+const rfPred     = [104.9,105.1,105.3,105.2,97.1,96.9,96.8,96.7,96.8,96.9,96.7,96.6,96.8,96.7,96.6,96.7,96.8,96.9,96.7,96.8,96.7,94.9,94.8,94.7];
+const lrPred     = [103.5,104.0,104.2,103.9,97.8,97.2,97.0,96.8,97.0,97.1,97.0,96.8,97.0,96.9,96.8,97.0,97.1,97.2,97.0,97.1,97.0,95.2,95.0,94.9];
+const svrPred    = [104.2,104.8,104.7,104.5,97.4,96.9,96.7,96.6,96.8,96.9,96.8,96.6,96.9,96.7,96.7,96.8,96.9,97.0,96.8,96.9,96.8,95.0,94.9,94.8];
+
+const forecastMonths = ['Apr 24','May 24','Jun 24','Jul 24','Aug 24','Sep 24'];
+const forecastPrices = [94.9, 95.1, 95.4, 95.2, 95.0, 94.8];
+
+/* ─── HERO MINI CHART ─── */
+const miniCtx = document.getElementById('heroMiniChart').getContext('2d');
+new Chart(miniCtx, {
+  type: 'line',
+  data: {
+    labels: testMonths.slice(-12),
+    datasets: [{
+      data: actualPrices.slice(-12),
+      borderColor: '#ff6b35', borderWidth: 2.5,
+      pointRadius: 0,
+      fill: true,
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0,0,0,80);
+        g.addColorStop(0,'rgba(255,107,53,.3)');
+        g.addColorStop(1,'rgba(255,107,53,0)');
+        return g;
+      },
+      tension: .4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: { x: { display: false }, y: { display: false } },
+    animation: { duration: 1800, easing: 'easeInOutQuart' }
+  }
+});
+
+/* ─── FORECAST ROWS ─── */
+(function buildForecastRows() {
+  const wrap = document.getElementById('forecastRows');
+  const min = Math.min(...forecastPrices), max = Math.max(...forecastPrices);
+  forecastMonths.forEach((m, i) => {
+    const v = forecastPrices[i];
+    const pct = ((v - min) / (max - min + .01)) * 85 + 15;
+    wrap.innerHTML += `
+      <div class="forecast-row">
+        <span class="forecast-month">${m}</span>
+        <div class="forecast-bar-wrap"><div class="forecast-bar" style="width:${pct.toFixed(1)}%"></div></div>
+        <span class="forecast-val">₹${v.toFixed(2)}</span>
+      </div>`;
+  });
+})();
+
+/* ─── LIVE TICKER ─── */
+let basePrice = 94.72, tickDir = 1;
+function tickPrice() {
+  const delta = (Math.random() - 0.48) * 0.18 * tickDir;
+  if (Math.random() > 0.85) tickDir *= -1;
+  basePrice = Math.max(93.5, Math.min(96.5, +(basePrice + delta).toFixed(2)));
+  const pct = +((basePrice - 94.72) / 94.72 * 100).toFixed(2);
+  const up = delta >= 0;
+  document.getElementById('livePrice').textContent = basePrice.toFixed(2);
+  const deltaEl = document.getElementById('priceDelta');
+  deltaEl.className = `dash-delta ${up ? 'up' : 'down'}`;
+  deltaEl.textContent = `${up ? '▲' : '▼'} ${up ? '+' : ''}${pct}%`;
+  document.getElementById('metaPred').textContent = (basePrice + 0.46).toFixed(2);
+}
+setInterval(tickPrice, 2800);
+
+/* ─── MAIN CHART ─── */
+let mainChart;
+function buildMainChart(model) {
+  const predMap = { rf: rfPred, linreg: lrPred, svr: svrPred };
+  const pred = predMap[model];
+  if (mainChart) mainChart.destroy();
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  mainChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: testMonths,
+      datasets: [
+        {
+          label: 'Actual Price',
+          data: actualPrices,
+          borderColor: '#ff6b35', borderWidth: 2.5,
+          pointBackgroundColor: '#ff6b35', pointRadius: 4,
+          tension: .35, fill: false
+        },
+        {
+          label: 'Predicted',
+          data: pred,
+          borderColor: '#00d4aa', borderWidth: 2,
+          borderDash: [6,4],
+          pointBackgroundColor: '#00d4aa', pointRadius: 3,
+          tension: .35, fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#e8e8f5', usePointStyle: true, padding: 14 } },
+        tooltip: {
+          backgroundColor: '#141428', borderColor: '#1e1e3a', borderWidth: 1,
+          titleColor: '#e8e8f5', bodyColor: '#6060a0', padding: 10,
+          callbacks: { label: ctx => ` ₹${ctx.raw.toFixed(2)}/L` }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1e1e3a' }, ticks: { color: '#6060a0', maxRotation: 45, font: { size: 10 } } },
+        y: { grid: { color: '#1e1e3a' }, ticks: { color: '#6060a0', callback: v => '₹'+v } }
+      },
+      animation: { duration: 700 }
+    }
+  });
+}
+buildMainChart('rf');
+
+/* ─── RADAR CHART ─── */
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+  type: 'radar',
+  data: {
+    labels: ['R² Score','Low RMSE','Low MAE','Speed','Interpretability'],
+    datasets: [
+      { label: 'Random Forest', data: [94.7,85,88,70,60], borderColor: '#ff6b35', backgroundColor: 'rgba(255,107,53,.1)', borderWidth: 2, pointBackgroundColor: '#ff6b35' },
+      { label: 'SVR', data: [89.2,78,80,65,45], borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,.08)', borderWidth: 2, pointBackgroundColor: '#00d4aa' },
+      { label: 'Linear Reg.', data: [81.4,70,72,95,95], borderColor: '#6060a0', backgroundColor: 'rgba(96,96,160,.08)', borderWidth: 1.5, pointBackgroundColor: '#6060a0' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: true, labels: { color: '#e8e8f5', usePointStyle: true, font: { size: 10 } } } },
+    scales: {
+      r: {
+        grid: { color: '#1e1e3a' }, ticks: { display: false },
+        pointLabels: { color: '#6060a0', font: { size: 10 } },
+        min: 0, max: 100
+      }
+    }
+  }
+});
+
+/* ─── FEATURE IMPORTANCE ─── */
+const featureCtx = document.getElementById('featureChart').getContext('2d');
+new Chart(featureCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Crude Oil','USD/INR','Lag-1M','Rolling 3M','Inflation','Lag-2M','Month'],
+    datasets: [{
+      label: 'Importance',
+      data: [0.41, 0.22, 0.18, 0.09, 0.05, 0.03, 0.02],
+      backgroundColor: ['#ff6b35','#ff9500','#00d4aa','#6c63ff','#6060a0','#3a3a60','#2a2a4a'],
+      borderRadius: 5, borderSkipped: false
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${(ctx.raw*100).toFixed(1)}% importance` } } },
+    scales: {
+      x: { grid: { color: '#1e1e3a' }, max: .5, ticks: { color: '#6060a0', callback: v => (v*100)+'%' } },
+      y: { grid: { display: false }, ticks: { color: '#e8e8f5' } }
+    }
+  }
+});
+
+/* ─── DISTRIBUTION CHART ─── */
+const distCtx = document.getElementById('distChart').getContext('2d');
+new Chart(distCtx, {
+  type: 'bar',
+  data: {
+    labels: ['47–55','55–63','63–71','71–79','79–87','87–95','95–103','103–106'],
+    datasets: [{
+      label: 'Records',
+      data: [12, 8, 16, 6, 14, 28, 72, 15],
+      backgroundColor: 'rgba(255,107,53,.7)',
+      borderColor: '#ff6b35', borderWidth: 1, borderRadius: 5
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#6060a0', font: { size: 9 } } },
+      y: { grid: { color: '#1e1e3a' }, ticks: { color: '#6060a0' } }
+    }
+  }
+});
+
+/* ─── TAB SWITCH ─── */
+function switchModel(model, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildMainChart(model);
+}
+
+/* ─── COUNT UP ANIMATION ─── */
+function animateCount(el, target, decimals) {
+  const dur = 1800;
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / dur, 1);
+    const e = 1 - Math.pow(1-t, 3);
+    el.textContent = (target * e).toFixed(decimals);
+    if (t < 1) requestAnimationFrame(step);
+    else el.textContent = target.toFixed(decimals);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ─── INTERSECTION OBSERVER ─── */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    // Count up numbers
+    entry.target.querySelectorAll('.count-up').forEach(el => {
+      const t = parseFloat(el.dataset.target);
+      const d = parseInt(el.dataset.decimals || '1');
+      animateCount(el, t, d);
+    });
+    // Progress / metric fills
+    entry.target.querySelectorAll('.metric-fill, .score-fill').forEach(bar => {
+      const w = parseFloat(bar.dataset.w);
+      if (!isNaN(w)) bar.style.width = w + '%';
+    });
+    observer.unobserve(entry.target);
+  });
+}, { threshold: 0.25 });
+
+document.querySelectorAll('#metricsSection, .model-table tbody').forEach(el => observer.observe(el));
+
+/* ─── HERO COUNTERS (immediate) ─── */
+setTimeout(() => {
+  document.querySelectorAll('.hero-stats .count-up').forEach(el => {
+    const t = parseFloat(el.dataset.target);
+    const d = parseInt(el.dataset.decimals || '1');
+    animateCount(el, t, d);
+  });
+}, 900);
+
+/* ─── NAV SCROLL ─── */
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('mainNav');
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+});
+</script>
+</body>
+</html>

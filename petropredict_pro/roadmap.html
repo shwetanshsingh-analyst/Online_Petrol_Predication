@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PetroPredict — Project Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0c; --surface: #111116; --card: #16161e;
+    --border: #1e1e2a; --accent: #f5a623; --accent2: #e8621a;
+    --accent3: #4ecdc4; --red: #ff4757; --green: #2ed573;
+    --text: #e8e8f0; --muted: #6b6b85;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;padding:3rem 2rem;max-width:1100px;margin:0 auto}
+  h1{font-family:'Syne',sans-serif;font-weight:800;font-size:2.8rem;letter-spacing:-.03em;margin-bottom:.4rem}
+  h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .sub{color:var(--muted);font-weight:300;margin-bottom:3.5rem;font-size:1.05rem}
+  .phase{margin-bottom:2.5rem}
+  .phase-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem}
+  .phase-num{
+    width:44px;height:44px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#000;font-family:'Syne',sans-serif;font-weight:800;
+    font-size:1rem;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .phase-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.15rem}
+  .phase-tag{font-family:'Space Mono',monospace;font-size:.68rem;
+    background:rgba(245,166,35,.1);color:var(--accent);
+    padding:.2rem .6rem;border-radius:4px;margin-left:.5rem}
+  .steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;padding-left:3.5rem}
+  .step{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:12px;padding:1.2rem;
+    border-left:3px solid var(--accent);
+    transition:transform .2s,border-color .2s;
+  }
+  .step:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .step-icon{font-size:1.4rem;margin-bottom:.5rem}
+  .step-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.3rem}
+  .step-desc{font-size:.78rem;color:var(--muted);line-height:1.5}
+  .step-tools{margin-top:.6rem;display:flex;gap:.3rem;flex-wrap:wrap}
+  .tool-chip{font-family:'Space Mono',monospace;font-size:.6rem;
+    background:rgba(78,205,196,.08);color:var(--accent3);
+    padding:.15rem .45rem;border-radius:3px}
+  .connector{display:flex;align-items:center;padding-left:3.5rem;margin-bottom:1.5rem}
+  .conn-line{width:2px;height:30px;background:linear-gradient(var(--accent),var(--accent2));margin-left:21px;border-radius:1px}
+  /* Phases colored borders */
+  .phase-1 .step{border-left-color:#4ecdc4}
+  .phase-1 .phase-num{background:linear-gradient(135deg,#4ecdc4,#2ed573)}
+  .phase-2 .step{border-left-color:var(--accent)}
+  .phase-3 .step{border-left-color:var(--accent2)}
+  .phase-3 .phase-num{background:linear-gradient(135deg,var(--accent2),var(--red))}
+  .phase-4 .step{border-left-color:var(--green)}
+  .phase-4 .phase-num{background:linear-gradient(135deg,var(--green),#4ecdc4)}
+  .phase-5 .step{border-left-color:#a29bfe}
+  .phase-5 .phase-num{background:linear-gradient(135deg,#a29bfe,#4ecdc4)}
+  /* Summary table */
+  .summary{margin-top:3rem;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem}
+  .summary h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;margin-bottom:1.2rem;color:var(--accent)}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.08em;padding:.6rem .8rem;border-bottom:1px solid var(--border)}
+  td{padding:.65rem .8rem;font-size:.85rem;border-bottom:1px solid rgba(30,30,42,.5)}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;font-size:.68rem;padding:.2rem .5rem;border-radius:4px;font-family:'Space Mono',monospace}
+  .badge-done{background:rgba(46,213,115,.12);color:var(--green)}
+  .badge-active{background:rgba(245,166,35,.12);color:var(--accent)}
+  .badge-plan{background:rgba(107,107,133,.12);color:var(--muted)}
+  footer{margin-top:3rem;text-align:center;font-size:.8rem;color:var(--muted);font-family:'Space Mono',monospace}
+  @media(max-width:600px){.steps{padding-left:0}.connector{padding-left:0}.conn-line{margin-left:0}}
+</style>
+</head>
+<body>
+
+<h1>Petro<span>Predict</span> Roadmap</h1>
+<p class="sub">End-to-end ML project roadmap — from data collection to deployment</p>
+
+<!-- PHASE 1 -->
+<div class="phase phase-1">
+  <div class="phase-header">
+    <div class="phase-num">1</div>
+    <div>
+      <div class="phase-title">Data Collection & Setup<span class="phase-tag">FOUNDATION</span></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">📦</div>
+      <div class="step-name">Environment Setup</div>
+      <div class="step-desc">Install Python, Jupyter, and all required libraries via requirements.txt</div>
+      <div class="step-tools"><span class="tool-chip">Python 3.10</span><span class="tool-chip">pip</span><span class="tool-chip">venv</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📂</div>
+      <div class="step-name">Dataset Collection</div>
+      <div class="step-desc">Download historical petrol price dataset from Kaggle (2010–2024)</div>
+      <div class="step-tools"><span class="tool-chip">Kaggle</span><span class="tool-chip">CSV</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🔍</div>
+      <div class="step-name">Data Loading</div>
+      <div class="step-desc">Load CSV with Pandas, parse dates, inspect shape and dtypes</div>
+      <div class="step-tools"><span class="tool-chip">Pandas</span><span class="tool-chip">NumPy</span></div>
+    </div>
+  </div>
+</div>
+<div class="connector"><div class="conn-line"></div></div>
+
+<!-- PHASE 2 -->
+<div class="phase phase-2">
+  <div class="phase-header">
+    <div class="phase-num">2</div>
+    <div>
+      <div class="phase-title">Exploratory Data Analysis<span class="phase-tag">EDA</span></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">🧹</div>
+      <div class="step-name">Data Cleaning</div>
+      <div class="step-desc">Handle missing values, fix dtypes, remove outliers using IQR method</div>
+      <div class="step-tools"><span class="tool-chip">Pandas</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📊</div>
+      <div class="step-name">Univariate Analysis</div>
+      <div class="step-desc">Histograms, box plots, price distribution and trend over time</div>
+      <div class="step-tools"><span class="tool-chip">Matplotlib</span><span class="tool-chip">Seaborn</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🔗</div>
+      <div class="step-name">Correlation Analysis</div>
+      <div class="step-desc">Heatmap of feature correlations to identify top predictors</div>
+      <div class="step-tools"><span class="tool-chip">Seaborn</span><span class="tool-chip">NumPy</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📈</div>
+      <div class="step-name">Time Series Plots</div>
+      <div class="step-desc">Visualize crude oil vs petrol price trends across 14 years</div>
+      <div class="step-tools"><span class="tool-chip">Matplotlib</span></div>
+    </div>
+  </div>
+</div>
+<div class="connector"><div class="conn-line"></div></div>
+
+<!-- PHASE 3 -->
+<div class="phase phase-3">
+  <div class="phase-header">
+    <div class="phase-num">3</div>
+    <div>
+      <div class="phase-title">Feature Engineering & Preprocessing<span class="phase-tag">PREP</span></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">⏳</div>
+      <div class="step-name">Lag Features</div>
+      <div class="step-desc">Create Lag_1, Lag_2, Lag_3 — previous months' prices as predictors</div>
+      <div class="step-tools"><span class="tool-chip">Pandas</span><span class="tool-chip">shift()</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📉</div>
+      <div class="step-name">Rolling Averages</div>
+      <div class="step-desc">3-month and 6-month rolling mean to capture trends</div>
+      <div class="step-tools"><span class="tool-chip">Pandas</span><span class="tool-chip">rolling()</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">⚖️</div>
+      <div class="step-name">Feature Scaling</div>
+      <div class="step-desc">StandardScaler normalization for SVR model compatibility</div>
+      <div class="step-tools"><span class="tool-chip">Scikit-learn</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">✂️</div>
+      <div class="step-name">Train / Test Split</div>
+      <div class="step-desc">80% training / 20% test split (chronological, no shuffle)</div>
+      <div class="step-tools"><span class="tool-chip">Scikit-learn</span></div>
+    </div>
+  </div>
+</div>
+<div class="connector"><div class="conn-line"></div></div>
+
+<!-- PHASE 4 -->
+<div class="phase phase-4">
+  <div class="phase-header">
+    <div class="phase-num">4</div>
+    <div>
+      <div class="phase-title">Model Training & Evaluation<span class="phase-tag">ML CORE</span></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">📏</div>
+      <div class="step-name">Linear Regression</div>
+      <div class="step-desc">Baseline model — fast, interpretable. Establishes performance floor</div>
+      <div class="step-tools"><span class="tool-chip">LinearRegression</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🌲</div>
+      <div class="step-name">Random Forest</div>
+      <div class="step-desc">200 estimators, max_depth=10. Best performing model (R²=94.7%)</div>
+      <div class="step-tools"><span class="tool-chip">RandomForestRegressor</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🎯</div>
+      <div class="step-name">SVR</div>
+      <div class="step-desc">Support Vector Regression with RBF kernel. C=100, gamma=0.01</div>
+      <div class="step-tools"><span class="tool-chip">SVR</span><span class="tool-chip">RBF</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📐</div>
+      <div class="step-name">Model Evaluation</div>
+      <div class="step-desc">Compare with MAE, RMSE, R² Score, MAPE across all 3 models</div>
+      <div class="step-tools"><span class="tool-chip">metrics</span><span class="tool-chip">cross_val</span></div>
+    </div>
+  </div>
+</div>
+<div class="connector"><div class="conn-line"></div></div>
+
+<!-- PHASE 5 -->
+<div class="phase phase-5">
+  <div class="phase-header">
+    <div class="phase-num">5</div>
+    <div>
+      <div class="phase-title">Forecast & Presentation<span class="phase-tag">FINAL</span></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">🔮</div>
+      <div class="step-name">Future Prediction</div>
+      <div class="step-desc">Forecast next 6 months using best model (Random Forest)</div>
+      <div class="step-tools"><span class="tool-chip">RF</span><span class="tool-chip">predict()</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📌</div>
+      <div class="step-name">Result Visualization</div>
+      <div class="step-desc">Actual vs predicted plots, residual analysis, feature importance</div>
+      <div class="step-tools"><span class="tool-chip">Matplotlib</span><span class="tool-chip">Seaborn</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🌐</div>
+      <div class="step-name">Web Showcase</div>
+      <div class="step-desc">index.html — animated project showcase with live chart visualizations</div>
+      <div class="step-tools"><span class="tool-chip">HTML/CSS/JS</span><span class="tool-chip">Chart.js</span></div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🚀</div>
+      <div class="step-name">Deployment</div>
+      <div class="step-desc">Host on GitHub Pages, Netlify or Vercel — free static hosting</div>
+      <div class="step-tools"><span class="tool-chip">GitHub Pages</span><span class="tool-chip">Netlify</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SUMMARY TABLE -->
+<div class="summary">
+  <h2>📋 Project Summary</h2>
+  <table>
+    <tr>
+      <th>Component</th><th>Details</th><th>Status</th>
+    </tr>
+    <tr><td>Dataset</td><td>petrol_prices.csv — 170 records, 7 features (2010–2024)</td><td><span class="badge badge-done">✅ Ready</span></td></tr>
+    <tr><td>Jupyter Notebook</td><td>notebooks/petrol_price_prediction.ipynb — 9 steps</td><td><span class="badge badge-done">✅ Ready</span></td></tr>
+    <tr><td>Python Script</td><td>src/petrol_predict.py — standalone runnable</td><td><span class="badge badge-done">✅ Ready</span></td></tr>
+    <tr><td>Web Showcase</td><td>index.html — animated dashboard with live ticker</td><td><span class="badge badge-done">✅ Ready</span></td></tr>
+    <tr><td>Models</td><td>Linear Regression, Random Forest, SVR</td><td><span class="badge badge-done">✅ Ready</span></td></tr>
+    <tr><td>Best Model</td><td>Random Forest — R²: 94.7%, RMSE: 1.23 ₹/L</td><td><span class="badge badge-active">🏆 Best</span></td></tr>
+    <tr><td>Hosting</td><td>GitHub Pages / Netlify (drag & drop index.html)</td><td><span class="badge badge-plan">📌 Next Step</span></td></tr>
+  </table>
+</div>
+
+<footer>PetroPredict · ML Capstone · Built with Python + Scikit-learn + Pandas + Matplotlib</footer>
+
+</body>
+</html>
